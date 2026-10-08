@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Verification - Feedback System</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-text">
+                <h1>Admin Feedback System</h1>
+            </div>
+        </header>
+
+        <main class="login-box card">
+            <h2>Multi-Factor Authentication</h2>
+            <p class="subtitle">Enter the 6-digit code from your app</p>
+
+            <div class="security-notice">
+                Step 2 of 2: Verify identity.
+            </div>
+
+            <form id="mfaForm">
+                <div class="form-group">
+                    <label for="mfa_code">Authentication Code</label>
+                    <input type="text" id="mfa_code" name="mfa_code" maxlength="6" pattern="[0-9]{6}" required
+                        class="mfa-input">
+                </div>
+                <button type="submit" class="btn btn-primary" id="mfa-btn" style="width: 100%;">
+                    Verify
+                </button>
+            </form>
+            <div id="mfa-message" class="response-message"></div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Corporate Lab Test. Internal Use Only.</p>
+        </footer>
+    </div>
+
+    <script>
+        const mfaInput = document.getElementById('mfa_code');
+        mfaInput.focus();
+        mfaInput.addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        document.getElementById('mfaForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const mfa_code = mfaInput.value;
+            const msg = document.getElementById('mfa-message');
+            const btn = document.getElementById('mfa-btn');
+
+            if (mfa_code.length !== 6) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch('/api/verify-mfa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mfa_code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msg.textContent = 'MFA verified.';
+                    msg.className = 'response-message success show';
+                    setTimeout(() => window.location.href = data.redirect, 1000);
+                } else {
+                    msg.textContent = data.message;
+                    msg.className = 'response-message error show';
+                    mfaInput.value = '';
+                    mfaInput.focus();
+                    btn.disabled = false;
+                    btn.textContent = 'Verify';
+                }
+            } catch (err) {
+                msg.textContent = 'Service unavailable';
+                msg.className = 'response-message error show';
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+            }
+        });
+    </script>
+</body>
+
+</html>

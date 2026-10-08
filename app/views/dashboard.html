@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Feedback System</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo-text" style="margin-bottom: 2rem;">
+                <h1>Admin Panel</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <span>Feedback Review</span>
+                    <span class="nav-item-badge" id="feedback-count">0</span>
+                </a>
+                <a href="#" class="nav-item">Analytics</a>
+                <a href="#" class="nav-item">WAF Settings</a>
+                <a href="/" class="nav-item">Logout</a>
+            </nav>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <div>
+                    <h2>Feedback Review Dashboard</h2>
+                </div>
+                <div class="header-badges">
+                    <span>MFA: Active</span>
+                    <span>Session: Authenticated</span>
+                </div>
+            </header>
+
+            <div class="status-row">
+                <div class="status-card">
+                    <span class="status-value" id="total-submissions">0</span>
+                    <span class="status-label">Total Submissions</span>
+                </div>
+                <div class="status-card">
+                    <span class="status-value">Active</span>
+                    <span class="status-label">WAF Status</span>
+                </div>
+                <div class="status-card">
+                    <span class="status-value">Enforced</span>
+                    <span class="status-label">MFA Policy</span>
+                </div>
+                <div class="status-card">
+                    <span class="status-value">adm_sess</span>
+                    <span class="status-label">Session Type</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between;">
+                    <h3>Submitted Feedback</h3>
+                    <button class="btn btn-primary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;"
+                        onclick="loadFeedback()">Refresh</button>
+                </div>
+                <div id="feedback-list">
+                    Loading...
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--danger);">
+                <div class="card-header">
+                    <h3>System Configuration (Classified)</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <span class="config-label">WAF Rules</span>
+                        <span class="config-value">Block script | document.cookie</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Log Directory</span>
+                        <span class="config-value">/opt/admin/logs/</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">System Flag</span>
+                        <span class="config-value flag">SCENARIO75{RED_C00k13_MFA_Byp4ss_0wn3d}</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadFeedback() {
+            const list = document.getElementById('feedback-list');
+            const countBadge = document.getElementById('feedback-count');
+            const totalDisplay = document.getElementById('total-submissions');
+
+            try {
+                const res = await fetch('/api/feedback');
+                if (!res.ok) {
+                    list.innerHTML = 'Failed to load feedback.';
+                    return;
+                }
+                const data = await res.json();
+                countBadge.textContent = data.length;
+                totalDisplay.textContent = data.length;
+
+                if (data.length === 0) {
+                    list.innerHTML = 'No feedback submissions yet.';
+                    return;
+                }
+
+                list.innerHTML = data.map(item => `
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <span class="feedback-author">${escapeForDisplay(item.name)}</span>
+                            <span>#${item.id} - ${new Date(item.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div class="xss-payload">${item.content}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = 'Network error.';
+            }
+        }
+
+        function escapeForDisplay(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        loadFeedback();
+        setInterval(loadFeedback, 15000);
+    </script>
+</body>
+
+</html>

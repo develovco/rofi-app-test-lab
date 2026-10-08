@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Feedback System - Portal</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<!--
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║     FEEDBACK SYSTEM v2.4.1                                   ║
+║     Build: 2024.10.09 | Internal Use Only                    ║
+║                                                              ║
+║     NOTE TO DEVS:                                            ║
+║     Have you checked the robots.txt lately?                  ║
+║     Some paths that should be hidden are being indexed...    ║
+║     We really need to fix this before the next audit.        ║
+║                                                              ║
+║     TODO: Review session token logic - Jake mentioned        ║
+║     something about the pre_mfa_session flow being weird     ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+-->
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-text">
+                <h1>Admin Feedback System</h1>
+            </div>
+            <nav>
+                <a href="/login" class="nav-link">Admin Login</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h2>Feedback Portal</h2>
+                <p>Submit your feedback to our administrative team. All submissions are reviewed by authorized
+                    personnel.</p>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3>Submit Feedback</h3>
+                </div>
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback">Feedback</label>
+                        <textarea id="feedback" name="feedback" placeholder="Share your thoughts..."
+                            required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submit-feedback-btn">
+                        Submit Feedback
+                    </button>
+                </form>
+                <div id="response-message" class="response-message"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Corporate Lab Test. Internal Use Only.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const nameField = document.getElementById('name');
+            const feedbackField = document.getElementById('feedback');
+            const responseMsg = document.getElementById('response-message');
+            const submitBtn = document.getElementById('submit-feedback-btn');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: nameField.value, feedback: feedbackField.value })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    responseMsg.textContent = data.message;
+                    responseMsg.className = 'response-message success show';
+                    document.getElementById('feedbackForm').reset();
+                } else {
+                    responseMsg.textContent = data.message || 'Error';
+                    responseMsg.className = 'response-message error show';
+                }
+            } catch (err) {
+                responseMsg.textContent = 'Network error.';
+                responseMsg.className = 'response-message error show';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Feedback';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # ─── NGINX REVERSE PROXY ────────────────────────────────
+  nginx:
+    build:
+      context: ./nginx
+    container_name: ctf-nginx
+    ports:
+      - "3075:80"
+    volumes:
+      - logs_data:/opt/admin/logs
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - ctf_net
+    restart: unless-stopped
+
+  # ─── NODE.JS APPLICATION ────────────────────────────────
+  app:
+    build:
+      context: ./app
+    container_name: ctf-app
+    volumes:
+      - logs_data:/opt/admin/logs
+    networks:
+      - ctf_net
+    environment:
+      - NODE_ENV=production
+      - LOG_DIR=/opt/admin/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+
+volumes:
+  logs_data:
+    driver: local
+
+networks:
+  ctf_net:
+    driver: bridge

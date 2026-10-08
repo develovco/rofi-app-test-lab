@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Feedback System</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-text">
+                <h1>Admin Feedback System</h1>
+            </div>
+            <nav>
+                <a href="/" class="nav-link">Back to Portal</a>
+            </nav>
+        </header>
+
+        <main class="login-box card">
+            <h2>Administrator Authentication</h2>
+            <p class="subtitle">Multi-Factor Authentication Enforced</p>
+
+            <div class="security-notice">
+                Step 1 of 2: Enter your credentials.
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn" style="width: 100%;">
+                    Authenticate
+                </button>
+            </form>
+            <div id="login-message" class="response-message"></div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Corporate Lab Test. Internal Use Only.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('login-message');
+            const btn = document.getElementById('login-btn');
+
+            btn.disabled = true;
+            btn.textContent = 'Authenticating...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msg.textContent = data.message;
+                    msg.className = 'response-message success show';
+                    setTimeout(() => window.location.href = data.redirect, 1000);
+                } else {
+                    msg.textContent = data.message;
+                    msg.className = 'response-message error show';
+                    btn.disabled = false;
+                    btn.textContent = 'Authenticate';
+                }
+            } catch (err) {
+                msg.textContent = 'Service unavailable.';
+                msg.className = 'response-message error show';
+                btn.disabled = false;
+                btn.textContent = 'Authenticate';
+            }
+        });
+    </script>
+</body>
+
+</html>
