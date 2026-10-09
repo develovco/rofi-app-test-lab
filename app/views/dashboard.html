@@ -97,7 +97,7 @@
             const totalDisplay = document.getElementById('total-submissions');
 
             try {
-                const res = await fetch('/api/feedback');
+                const res = await fetch('/api/admin/feedback');
                 if (!res.ok) {
                     list.innerHTML = 'Failed to load feedback.';
                     return;

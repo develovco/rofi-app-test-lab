@@ -8,20 +8,10 @@
     <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <!--
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║     FEEDBACK SYSTEM v2.4.1                                   ║
-║     Build: 2024.10.09 | Internal Use Only                    ║
-║                                                              ║
-║     NOTE TO DEVS:                                            ║
-║     Have you checked the robots.txt lately?                  ║
-║     Some paths that should be hidden are being indexed...    ║
-║     We really need to fix this before the next audit.        ║
-║                                                              ║
-║     TODO: Review session token logic - Jake mentioned        ║
-║     something about the pre_mfa_session flow being weird     ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════╗
+║  Looking for restricted areas?                   ║
+║  Check robots.txt — it lists everything.         ║
+╚══════════════════════════════════════════════════╝
 -->
 
 <body>
@@ -84,7 +74,7 @@
                 const res = await fetch('/api/feedback', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: nameField.value, feedback: feedbackField.value })
+                    body: JSON.stringify({ name: nameField.value, message: feedbackField.value })
                 });
                 const data = await res.json();
                 if (res.ok) {

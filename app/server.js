@@ -102,9 +102,10 @@ app.use((req, res, next) => {
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // FLAG: SCENARIO75{/api/verify-mfa} (disallowed path)
+// FLAG: SCENARIO75{/dashboard} (admin area disclosed)
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nDisallow: /api/verify-mfa\n');
+  res.send('User-agent: *\nDisallow: /api/verify-mfa\nDisallow: /dashboard\n');
 });
 
 // ──────────────────────────────────────────────
@@ -218,18 +219,18 @@ app.post('/api/verify-mfa', (req, res) => {
 //  ROUTES — FEEDBACK
 // ──────────────────────────────────────────────
 
-// FLAG: SCENARIO75{POST} (required method)
+// FLAG: SCENARIO75{POST} (required method — POST only, no GET handler)
 // FLAG: SCENARIO75{fetch} (exfiltration mechanism)
 app.post('/api/feedback', (req, res) => {
-  const { feedback, name } = req.body;
+  const { message, name } = req.body;
 
   // WAF check on submitted content
-  const wafResult = wafCheck(feedback);
+  const wafResult = wafCheck(message);
   if (wafResult.blocked) {
     logSecurity(`WAF_BLOCK: Blocked payload from ${req.ip} - Reason: ${wafResult.reason}`, 'WARNING');
     return res.status(403).json({
       success: false,
-      message: 'Request blocked by WAF: Potentially malicious content detected'
+      message: 'Forbidden — WAF blocked your request.'
     });
   }
 
@@ -237,24 +238,13 @@ app.post('/api/feedback', (req, res) => {
   feedbackStore.push({
     id: feedbackStore.length + 1,
     name: name || 'Anonymous',
-    content: feedback,
+    content: message,
     timestamp: new Date().toISOString(),
     ip: req.ip
   });
 
   logError(`Feedback submitted from ${req.ip}`, 'INFO');
   res.json({ success: true, message: 'Feedback submitted successfully. An admin will review it shortly.' });
-});
-
-// Get feedback API (requires admin session)
-app.get('/api/feedback', (req, res) => {
-  const sessionId = req.cookies.session_id;
-
-  if (sessionId && sessionId.startsWith('adm_sess')) {
-    return res.json(feedbackStore);
-  }
-
-  res.status(401).json({ error: 'Unauthorized' });
 });
 
 // ──────────────────────────────────────────────
@@ -295,6 +285,17 @@ app.get('/dashboard', (req, res) => {
 
   // No valid session — redirect to login
   res.redirect('/login');
+});
+
+// Dashboard API — returns stored feedback (requires admin session)
+app.get('/api/admin/feedback', (req, res) => {
+  const sessionId = req.cookies.session_id;
+
+  if (sessionId && sessionId.startsWith('adm_sess')) {
+    return res.json(feedbackStore);
+  }
+
+  res.status(401).json({ error: 'Unauthorized' });
 });
 
 // ──────────────────────────────────────────────
